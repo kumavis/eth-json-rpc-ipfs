@@ -15,7 +15,7 @@ function createIpfsMiddleware ({ ipfs, blockTracker }) {
       // only handle latest
       if (blockRef !== 'latest') return next()
       // construct ethPath
-      const ethPath = `${address}/balance`
+      const ethPath = `state/${address}/balance`
       performIpfsLookup(ethPath, res, end)
     },
 
@@ -24,7 +24,7 @@ function createIpfsMiddleware ({ ipfs, blockTracker }) {
       // only handle latest
       if (blockRef !== 'latest') return next()
       // construct ethPath
-      const ethPath = `${address}/nonce`
+      const ethPath = `state/${address}/nonce`
       performIpfsLookup(ethPath, res, end)
     },
 
@@ -33,7 +33,7 @@ function createIpfsMiddleware ({ ipfs, blockTracker }) {
       // only handle latest
       if (blockRef !== 'latest') return next()
       // construct ethPath
-      const ethPath = `${address}/code`
+      const ethPath = `state/${address}/code`
       performIpfsLookup(ethPath, res, end)
     },
 
@@ -42,7 +42,7 @@ function createIpfsMiddleware ({ ipfs, blockTracker }) {
       // only handle latest
       if (blockRef !== 'latest') return next()
       // construct ethPath
-      const ethPath = `${address}/storage/${key}`
+      const ethPath = `state/${address}/storage/${key}`
       performIpfsLookup(ethPath, res, end)
     }
 
