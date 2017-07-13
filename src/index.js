@@ -1,3 +1,5 @@
+'use strict'
+
 const scaffold = require('eth-json-rpc-middleware/scaffold')
 const waitForBlock = require('eth-json-rpc-middleware/waitForBlock')
 const cidFromHash = require('ipld-eth-star/util/cidFromHash')
@@ -8,7 +10,7 @@ module.exports = createIpfsMiddleware
 function createIpfsMiddleware ({ ipfs, blockTracker }) {
   return waitForBlock({ blockTracker })(scaffold({
 
-    'eth_getBalance': (req, res, next, end) => {
+    eth_getBalance: (req, res, next, end) => {
       const [address, blockRef] = req.params
       // only handle latest
       if (blockRef !== 'latest') return next()
@@ -17,7 +19,7 @@ function createIpfsMiddleware ({ ipfs, blockTracker }) {
       performIpfsLookup(ethPath, res, end)
     },
 
-    'eth_getTransactionCount': (req, res, next, end) => {
+    eth_getTransactionCount: (req, res, next, end) => {
       const [address, blockRef] = req.params
       // only handle latest
       if (blockRef !== 'latest') return next()
@@ -26,7 +28,7 @@ function createIpfsMiddleware ({ ipfs, blockTracker }) {
       performIpfsLookup(ethPath, res, end)
     },
 
-    'eth_getCode': (req, res, next, end) => {
+    eth_getCode: (req, res, next, end) => {
       const [address, blockRef] = req.params
       // only handle latest
       if (blockRef !== 'latest') return next()
@@ -35,7 +37,7 @@ function createIpfsMiddleware ({ ipfs, blockTracker }) {
       performIpfsLookup(ethPath, res, end)
     },
 
-    'eth_getStorageAt': (req, res, next, end) => {
+    eth_getStorageAt: (req, res, next, end) => {
       const [address, key, blockRef] = req.params
       // only handle latest
       if (blockRef !== 'latest') return next()
