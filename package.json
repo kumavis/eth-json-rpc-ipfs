@@ -1,0 +1,31 @@
+{
+  "name": "eth-json-rpc-ipfs",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/index.js",
+  "scripts": {
+    "lint": "aegir-lint",
+    "release": "aegir-release",
+    "build": "aegir-build",
+    "test": "aegir-test",
+    "test:node": "aegir-test node",
+    "test:browser": "aegir-test browser",
+    "coverage": "aegir-coverage",
+    "coverage-publish": "aegir-coverage publish"
+  },
+  "author": "kumavis",
+  "license": "ISC",
+  "devDependencies": {
+    "aegir": "^11.0.2",
+    "chai": "^4.1.0",
+    "dirty-chai": "^2.0.1",
+    "eth-block-tracker": "^2.0.1",
+    "eth-query": "^2.1.2",
+    "ethereumjs-util": "^5.1.2",
+    "json-rpc-engine": "^3.0.0"
+  },
+  "dependencies": {
+    "eth-json-rpc-middleware": "^1.0.1",
+    "ipld-eth-star": "^1.4.1"
+  }
+}
