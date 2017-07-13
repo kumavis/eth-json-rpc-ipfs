@@ -1,3 +1,4 @@
+/* eslint-env mocha */
 const chai = require('chai')
 chai.use(require('dirty-chai'))
 const expect = chai.expect
@@ -7,11 +8,8 @@ const RpcBlockTracker = require('eth-block-tracker')
 const EthQuery = require('eth-query')
 const TestBlockMiddleware = require('eth-block-tracker/test/util/testBlockMiddleware')
 const createIpfsMiddleware = require('../src/index')
-const scaffold = require('eth-json-rpc-middleware/scaffold')
 
 // const middleware = createIpfsMiddleware({ blockTracker })
-
-
 
 // it('contructor - no opts', (t) => {
 //   // t.plan(1)
@@ -34,7 +32,7 @@ const scaffold = require('eth-json-rpc-middleware/scaffold')
 it('provider - balance query', (done) => {
   // t.plan(3)
 
-  const { engine, dataEngine, testBlockSource, blockTracker } = createTestSetup()
+  const { engine, testBlockSource, blockTracker } = createTestSetup()
 
   // unblock from waiting for block
   testBlockSource.nextBlock()
@@ -48,12 +46,11 @@ it('provider - balance query', (done) => {
     blockTracker.stop()
     done()
   })
-
 })
 
 // util
 
-function createTestSetup() {
+function createTestSetup () {
   // raw data source
   const { engine: dataEngine, testBlockSource } = createEngineForTestData()
   const dataProvider = providerFromEngine(dataEngine)
@@ -76,7 +73,7 @@ function createTestSetup() {
           case 'code':
             return resolve({ value: Buffer.from('101010', 'hex'), remainderPath: '' })
           default:
-            return reject()
+            return reject(new Error('FakeIpfs did not understand request path'))
         }
       })
     }
@@ -92,14 +89,14 @@ function createTestSetup() {
   return { engine, provider, dataEngine, dataProvider, query, blockTracker, testBlockSource }
 }
 
-function createEngineForTestData() {
+function createEngineForTestData () {
   const engine = new JsonRpcEngine()
   const testBlockSource = new TestBlockMiddleware()
   engine.push(testBlockSource.createMiddleware())
   return { engine, testBlockSource }
 }
 
-function providerFromEngine(engine) {
+function providerFromEngine (engine) {
   const provider = { sendAsync: engine.handle.bind(engine) }
   return provider
 }

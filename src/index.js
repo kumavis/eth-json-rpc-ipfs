@@ -5,8 +5,7 @@ const sha3 = require('ethereumjs-util').sha3
 
 module.exports = createIpfsMiddleware
 
-
-function createIpfsMiddleware({ ipfs, blockTracker }) {
+function createIpfsMiddleware ({ ipfs, blockTracker }) {
   return waitForBlock({ blockTracker })(scaffold({
 
     'eth_getBalance': (req, res, next, end) => {
@@ -43,19 +42,18 @@ function createIpfsMiddleware({ ipfs, blockTracker }) {
       // construct ethPath
       const ethPath = `${address}/storage/${key}`
       performIpfsLookup(ethPath, res, end)
-    },
+    }
 
   }))
 
-
-  function performIpfsLookup(ethPath, res, end) {
+  function performIpfsLookup (ethPath, res, end) {
     const currentBlock = blockTracker.getCurrentBlock()
     const blockHashBuf = Buffer.from(currentBlock.hash.slice(2), 'hex')
     const cid = cidFromHash('eth-block', blockHashBuf)
     const dagPath = transformEthPath(ethPath)
     // console.log('dagPath:', dagPath)
     ipfs.dag.get(cid, dagPath).then((result) => {
-      const resultHex = '0x'+result.value.toString('hex')
+      const resultHex = '0x' + result.value.toString('hex')
       // console.log('query result:', resultHex)
       res.result = resultHex
       end()
@@ -66,7 +64,7 @@ function createIpfsMiddleware({ ipfs, blockTracker }) {
   }
 }
 
-function transformEthPath(ethPath, blockHashBuf) {
+function transformEthPath (ethPath, blockHashBuf) {
   const ethPathParts = ethPath.split('/')
   // build ipfs dag query string
   let dagPathParts = []
@@ -76,7 +74,7 @@ function transformEthPath(ethPath, blockHashBuf) {
     // remove header
     if (part === 'eth') return ''
     // abort if not hex
-    if (part.slice(0,2) !== '0x') return part
+    if (part.slice(0, 2) !== '0x') return part
     // hash
     const keyBuf = Buffer.from(part.slice(2), 'hex')
     const hashString = sha3(keyBuf).toString('hex')
