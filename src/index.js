@@ -1,9 +1,10 @@
 'use strict'
-
+const promiseToCallback = require('promise-to-callback')
 const scaffold = require('eth-json-rpc-middleware/scaffold')
 const waitForBlock = require('eth-json-rpc-middleware/waitForBlock')
 const cidFromHash = require('ipld-eth-star/util/cidFromHash')
 const sha3 = require('ethereumjs-util').sha3
+const rlp = require('rlp')
 
 module.exports = createIpfsMiddleware
 
@@ -16,7 +17,12 @@ function createIpfsMiddleware ({ ipfs, blockTracker }) {
       if (blockRef !== 'latest') return next()
       // construct ethPath
       const ethPath = `state/${address}/balance`
-      performIpfsLookup(ethPath, res, end)
+      performIpfsLookup(ethPath, (err, result) => {
+        if (err) return end(err)
+        const resultHex = '0x' + result.value.toString('hex')
+        res.result = resultHex
+        end()
+      })
     },
 
     eth_getTransactionCount: (req, res, next, end) => {
@@ -25,7 +31,12 @@ function createIpfsMiddleware ({ ipfs, blockTracker }) {
       if (blockRef !== 'latest') return next()
       // construct ethPath
       const ethPath = `state/${address}/nonce`
-      performIpfsLookup(ethPath, res, end)
+      performIpfsLookup(ethPath, (err, result) => {
+        if (err) return end(err)
+        const resultHex = '0x' + result.value.toString('hex')
+        res.result = resultHex
+        end()
+      })
     },
 
     eth_getCode: (req, res, next, end) => {
@@ -34,7 +45,12 @@ function createIpfsMiddleware ({ ipfs, blockTracker }) {
       if (blockRef !== 'latest') return next()
       // construct ethPath
       const ethPath = `state/${address}/code`
-      performIpfsLookup(ethPath, res, end)
+      performIpfsLookup(ethPath, (err, result) => {
+        if (err) return end(err)
+        const resultHex = '0x' + result.value.toString('hex')
+        res.result = resultHex
+        end()
+      })
     },
 
     eth_getStorageAt: (req, res, next, end) => {
@@ -43,26 +59,24 @@ function createIpfsMiddleware ({ ipfs, blockTracker }) {
       if (blockRef !== 'latest') return next()
       // construct ethPath
       const ethPath = `state/${address}/storage/${key}`
-      performIpfsLookup(ethPath, res, end)
+      console.log('storage:', ethPath)
+      performIpfsLookup(ethPath, (err, result) => {
+        if (err) return end(err)
+        const decoded = rlp.decode(result.value)
+        const resultHex = '0x' + decoded.toString('hex')
+        res.result = resultHex
+        end()
+      })
     }
 
   }))
 
-  function performIpfsLookup (ethPath, res, end) {
+  function performIpfsLookup (ethPath, cb) {
     const currentBlock = blockTracker.getCurrentBlock()
     const blockHashBuf = Buffer.from(currentBlock.hash.slice(2), 'hex')
     const cid = cidFromHash('eth-block', blockHashBuf)
     const dagPath = transformEthPath(ethPath)
-    // console.log('dagPath:', dagPath)
-    ipfs.dag.get(cid, dagPath).then((result) => {
-      const resultHex = '0x' + result.value.toString('hex')
-      // console.log('query result:', resultHex)
-      res.result = resultHex
-      end()
-    }).catch((err) => {
-      console.error(err)
-      end(err)
-    })
+    promiseToCallback(ipfs.dag.get(cid, dagPath))(cb)
   }
 }
 

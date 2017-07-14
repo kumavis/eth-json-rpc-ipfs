@@ -26,6 +26,8 @@
   },
   "dependencies": {
     "eth-json-rpc-middleware": "^1.0.1",
-    "ipld-eth-star": "^1.4.1"
+    "ipld-eth-star": "^1.4.1",
+    "promise-to-callback": "^1.0.0",
+    "rlp": "^2.0.0"
   }
 }
