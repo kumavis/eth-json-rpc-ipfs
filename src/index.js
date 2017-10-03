@@ -1,82 +1,70 @@
 'use strict'
 const promiseToCallback = require('promise-to-callback')
 const scaffold = require('eth-json-rpc-middleware/scaffold')
-const waitForBlock = require('eth-json-rpc-middleware/waitForBlock')
 const cidFromHash = require('ipld-eth-star/util/cidFromHash')
 const sha3 = require('ethereumjs-util').sha3
 const rlp = require('rlp')
 
 module.exports = createIpfsMiddleware
 
-function createIpfsMiddleware ({ ipfs, blockTracker }) {
-  return waitForBlock({ blockTracker })(scaffold({
+function createIpfsMiddleware ({ ipfs, cht }) {
+  return scaffold({
 
-    eth_getBalance: (req, res, next, end) => {
+    eth_getBalance: async (req, res, next, end) => {
       const [address, blockRef] = req.params
       // only handle latest
-      if (blockRef !== 'latest') return next()
+      const blockHash = await cht.blockRefToHash(blockRef)
       // construct ethPath
       const ethPath = `state/${address}/balance`
-      performIpfsLookup(ethPath, (err, result) => {
-        if (err) return end(err)
-        const resultHex = '0x' + result.value.toString('hex')
-        res.result = resultHex
-        end()
-      })
+      const result = await performIpfsLookup(blockHash, ethPath)
+      const resultHex = '0x' + result.value.toString('hex')
+      res.result = resultHex
+      end()
     },
 
-    eth_getTransactionCount: (req, res, next, end) => {
+    eth_getTransactionCount: async (req, res, next, end) => {
       const [address, blockRef] = req.params
       // only handle latest
-      if (blockRef !== 'latest') return next()
+      const blockHash = await cht.blockRefToHash(blockRef)
       // construct ethPath
       const ethPath = `state/${address}/nonce`
-      performIpfsLookup(ethPath, (err, result) => {
-        if (err) return end(err)
-        const resultHex = '0x' + result.value.toString('hex')
-        res.result = resultHex
-        end()
-      })
+      const result = await performIpfsLookup(blockHash, ethPath)
+      const resultHex = '0x' + result.value.toString('hex')
+      res.result = resultHex
+      end()
     },
 
-    eth_getCode: (req, res, next, end) => {
+    eth_getCode: async (req, res, next, end) => {
       const [address, blockRef] = req.params
       // only handle latest
-      if (blockRef !== 'latest') return next()
+      const blockHash = await cht.blockRefToHash(blockRef)
       // construct ethPath
       const ethPath = `state/${address}/code`
-      performIpfsLookup(ethPath, (err, result) => {
-        if (err) return end(err)
-        const resultHex = '0x' + result.value.toString('hex')
-        res.result = resultHex
-        end()
-      })
+      const result = await performIpfsLookup(blockHash, ethPath)
+      const resultHex = '0x' + result.value.toString('hex')
+      res.result = resultHex
+      end()
     },
 
-    eth_getStorageAt: (req, res, next, end) => {
+    eth_getStorageAt: async (req, res, next, end) => {
       const [address, key, blockRef] = req.params
       // only handle latest
-      if (blockRef !== 'latest') return next()
+      const blockHash = await cht.blockRefToHash(blockRef)
       // construct ethPath
       const ethPath = `state/${address}/storage/${key}`
-      console.log('storage:', ethPath)
-      performIpfsLookup(ethPath, (err, result) => {
-        if (err) return end(err)
-        const decoded = rlp.decode(result.value)
-        const resultHex = '0x' + decoded.toString('hex')
-        res.result = resultHex
-        end()
-      })
+      const result = await performIpfsLookup(blockHash, ethPath)
+      const decoded = rlp.decode(result.value)
+      const resultHex = '0x' + decoded.toString('hex')
+      res.result = resultHex
+      end()
     }
 
-  }))
+  })
 
-  function performIpfsLookup (ethPath, cb) {
-    const currentBlock = blockTracker.getCurrentBlock()
-    const blockHashBuf = Buffer.from(currentBlock.hash.slice(2), 'hex')
-    const cid = cidFromHash('eth-block', blockHashBuf)
+  async function performIpfsLookup (blockHash, ethPath) {
+    const cid = cidFromHash('eth-block', blockHash)
     const dagPath = transformEthPath(ethPath)
-    promiseToCallback(ipfs.dag.get(cid, dagPath))(cb)
+    return await ipfs.dag.get(cid, dagPath)
   }
 }
 
@@ -87,7 +75,7 @@ function transformEthPath (ethPath, blockHashBuf) {
   let remainingParts = ethPathParts.slice()
   // search for hex key in remainingParts
   dagPathParts = remainingParts.map((part) => {
-    // remove header
+    // remove "eth" top level namespace
     if (part === 'eth') return ''
     // abort if not hex
     if (part.slice(0, 2) !== '0x') return part
